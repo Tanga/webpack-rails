@@ -10,6 +10,10 @@ describe 'webpack_asset_paths' do
     allow(Webpack::Rails::Manifest).to receive(:asset_paths).with(source).and_return(asset_paths)
   end
 
+  let(:request) do
+    double('request', host: 'undefined')
+  end
+
   it "should return paths straight from te manifest if the dev server is disabled" do
     ::Rails.configuration.webpack.dev_server.enabled = false
     expect(webpack_asset_paths source).to eq(asset_paths)
@@ -42,16 +46,19 @@ describe 'webpack_asset_paths' do
     ])
   end
 
-  it "allows for the host to be evaluated at request time" do
-    # Simulate the helper context
-    request = double(:request, host: 'evaluated')
+  context "switching hosts" do
+    let(:request) { double("request", host: 'evaluated') }
 
-    ::Rails.configuration.webpack.dev_server.enabled = true
-    ::Rails.configuration.webpack.dev_server.port = 4000
-    ::Rails.configuration.webpack.dev_server.host = proc { request.host }
+    it "allows for the host to be evaluated at request time" do
+      # Simulate the helper context
 
-    expect(webpack_asset_paths source).to eq([
-      "//evaluated:4000/a/a.js", "//evaluated:4000/b/b.css"
-    ])
+      ::Rails.configuration.webpack.dev_server.enabled = true
+      ::Rails.configuration.webpack.dev_server.port = 4000
+      ::Rails.configuration.webpack.dev_server.host = proc { |request| request.host }
+
+      expect(webpack_asset_paths source).to eq([
+        "//evaluated:4000/a/a.js", "//evaluated:4000/b/b.css"
+      ])
+    end
   end
 end

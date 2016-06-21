@@ -21,7 +21,7 @@ module Webpack
         port = ::Rails.configuration.webpack.dev_server.port
 
         host = ::Rails.configuration.webpack.dev_server.host
-        host = instance_eval(&host) if host.respond_to?(:call)
+        host = host.call(request) if host.respond_to?(:call)
 
         if ::Rails.configuration.webpack.dev_server.enabled
           paths.map! do |p|
